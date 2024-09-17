@@ -202,7 +202,7 @@ function App() {
           >
             <img
               src={birdImg}
-              className="rounded-3xl"
+              className="rounded-3xl border"
               alt="Bird"
             />
           </div>

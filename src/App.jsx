@@ -46,6 +46,10 @@ function App() {
 
   useEffect(() => {
     if (gameStart && !gameOver) {
+      // Determine the interval speed based on screen size
+      const isMobile = window.innerWidth <= 768;
+      const intervalSpeed = isMobile ? 45 : 50; // Faster speed for mobile screens
+
       let interval = setInterval(() => {
         setGravity((prev) => {
           if (birdPosition + prev + 1 > 93) {
@@ -103,7 +107,7 @@ function App() {
             setIsFalling(true);
           }
         }
-      }, 50);
+      }, intervalSpeed); // Use dynamic interval speed here
 
       return () => clearInterval(interval);
     }
@@ -134,13 +138,21 @@ function App() {
     setGameOver(false);
     setScore(0);
     setGravity(0);
+    
     setObstaclePosition(-20);
     generateRandomHeights();
   };
 
   const playClick = () => {
+    const isMobile = window.innerWidth <= 768;
+    
     if (gameStart && birdPosition + gravity > 6 && !gameOver) {
+      if(isMobile){
+        setGravity(gravity - 12);
+        return
+      }
       setGravity(gravity - 8);
+
     }
   };
 
@@ -197,7 +209,7 @@ function App() {
 
           <div
             ref={bottomObstacleRef}
-            className="absolute bottom-0 rotate-180 h-fit w-[12vw] md:w-[8vw]"
+            className="absolute bottom-0 rotate-180 h-fit w-[12vw] md:w-[5vw]"
             style={{
               right: `${obstaclePosition}%`,
               height: `${bottomObstacleHeight}%`,
@@ -212,7 +224,7 @@ function App() {
 
           <div
             ref={topObstacleRef}
-            className="absolute top-0  w-[12vw] md:w-[8vw]"
+            className="absolute top-0  w-[12vw] md:w-[5vw]"
             style={{
               right: `${obstaclePosition}%`,
              

@@ -48,7 +48,7 @@ function App() {
     if (gameStart && !gameOver) {
       // Determine the interval speed based on screen size
       const isMobile = window.innerWidth <= 768;
-      const intervalSpeed = isMobile ? 45 : 50; // Faster speed for mobile screens
+      const intervalSpeed = isMobile ? 25 : 50; // Faster speed for mobile screens
 
       let interval = setInterval(() => {
         setGravity((prev) => {

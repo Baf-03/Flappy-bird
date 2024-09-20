@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import birdImg from './assets/birdImg.png';
+import image from "./assets/image.png"
+import birdImg from './assets/died_bird.png';
 import obstacle from './assets/obstacle.png';
 import './App.css';
 
@@ -15,7 +16,9 @@ function App() {
   let [bestScore, setBestScore] = useState(0);
   let [isFalling, setIsFalling] = useState(false);
   let [showScoreAnimation, setShowScoreAnimation] = useState(false);
-
+  let interval1;
+  let gameover1=false
+  let obsInterval;
   const birdRef = useRef(null);
   const topObstacleRef = useRef(null);
   const bottomObstacleRef = useRef(null);
@@ -44,72 +47,87 @@ function App() {
     setTopObstacleHeight(newTopHeight);
   };
 
+  const obstacleMovement = () => {
+    obsInterval = setInterval(() => {
+      if (gameOver) {
+        clearInterval(obsInterval); // Stop obstacle movement if the game is over
+        return;
+      }
+  
+      setObstaclePosition((prevObstaclePosition) => {
+        const newObstaclePosition = prevObstaclePosition + 0.1; // Continue obstacle movement to the right
+        if (newObstaclePosition > 100) {
+          generateRandomHeights();
+          setShowScoreAnimation(true);
+  
+          setTimeout(() => {
+            setShowScoreAnimation(false);
+          }, 1000);
+  
+          return 0;
+        }
+  
+        // Score update logic - check when obstacle passes the bird
+        if (lastObstaclePosition.current < 50 && newObstaclePosition >= 50) {
+          setScore((prevScore) => prevScore + 1); // Increment score when the obstacle fully passes
+        }
+  
+        lastObstaclePosition.current = newObstaclePosition;
+        return newObstaclePosition;
+      });
+    }, 0);
+  };
+  
+  
+  
+  const birdMovement =()=>{
+    interval1= setInterval(()=>{
+      setGravity((prev) => {
+        if (birdPosition + prev + 1 > 93) {
+          clearInterval(interval1);
+          setGameOver(true);
+          setIsFalling(true);
+          return prev;
+        }
+        return prev + 2;
+      });
+      if (birdRef.current && topObstacleRef.current && bottomObstacleRef.current) {
+        const birdRect = birdRef.current.getBoundingClientRect();
+        const topObstacleRect = topObstacleRef.current.getBoundingClientRect();
+        const bottomObstacleRect = bottomObstacleRef.current.getBoundingClientRect();
+  
+        const collisionWithTopObstacle =
+          birdRect.left < topObstacleRect.right &&
+          birdRect.right > topObstacleRect.left &&
+          birdRect.top < topObstacleRect.bottom &&
+          birdRect.bottom > topObstacleRect.top;
+  
+        const collisionWithBottomObstacle =
+          birdRect.left < bottomObstacleRect.right &&
+          birdRect.right > bottomObstacleRect.left &&
+          birdRect.top < bottomObstacleRect.bottom &&
+          birdRect.bottom > bottomObstacleRect.top;
+  
+        if (collisionWithTopObstacle || collisionWithBottomObstacle) {
+          clearInterval(interval1);
+          setGameOver(true);
+          gameover1=true
+          setIsFalling(true);
+          clearInterval(obsInterval)
+        }
+      }
+    },100)
+    
+  }
+let innterval=50
   useEffect(() => {
     if (gameStart && !gameOver) {
       // Determine the interval speed based on screen size
       const isMobile = window.innerWidth <= 768;
-      const intervalSpeed = isMobile ? 20 : 50; // Faster speed for mobile screens
 
-      let interval = setInterval(() => {
-        setGravity((prev) => {
-          if (birdPosition + prev + 1 > 93) {
-            clearInterval(interval);
-            setGameOver(true);
-            setIsFalling(true);
-            return prev;
-          }
-
-          setObstaclePosition((prevObstaclePosition) => {
-            const newObstaclePosition = prevObstaclePosition + 1; // Continue obstacle movement to the right
-            if (newObstaclePosition > 100) {
-              generateRandomHeights();
-              setShowScoreAnimation(true);
-
-              setTimeout(() => {
-                setShowScoreAnimation(false);
-              }, 1000);
-
-              return -20;
-            }
-
-            // Score update logic - check when obstacle passes the bird
-            if (lastObstaclePosition.current < 50 && newObstaclePosition >= 50) {
-              setScore((prevScore) => prevScore + 1); // Increment score when the obstacle fully passes
-            }
-
-            lastObstaclePosition.current = newObstaclePosition;
-            return newObstaclePosition;
-          });
-
-          return prev + 1.5;
-        });
-
-        if (birdRef.current && topObstacleRef.current && bottomObstacleRef.current) {
-          const birdRect = birdRef.current.getBoundingClientRect();
-          const topObstacleRect = topObstacleRef.current.getBoundingClientRect();
-          const bottomObstacleRect = bottomObstacleRef.current.getBoundingClientRect();
-
-          const collisionWithTopObstacle =
-            birdRect.left < topObstacleRect.right &&
-            birdRect.right > topObstacleRect.left &&
-            birdRect.top < topObstacleRect.bottom &&
-            birdRect.bottom > topObstacleRect.top;
-
-          const collisionWithBottomObstacle =
-            birdRect.left < bottomObstacleRect.right &&
-            birdRect.right > bottomObstacleRect.left &&
-            birdRect.top < bottomObstacleRect.bottom &&
-            birdRect.bottom > bottomObstacleRect.top;
-
-          if (collisionWithTopObstacle || collisionWithBottomObstacle) {
-            clearInterval(interval);
-            setGameOver(true);
-            setIsFalling(true);
-          }
-        }
-      }, intervalSpeed); // Use dynamic interval speed here
-
-      return () => clearInterval(interval);
+      birdMovement()
+      obstacleMovement()
+      return () => clearInterval(interval1);
     }
   }, [gameStart, gameOver, birdPosition]);
 
@@ -123,6 +141,7 @@ function App() {
             clearInterval(fallInterval);
             setGravity(0);
             setIsFalling(false);
+
             return prevGravity;
           }
         });
@@ -147,11 +166,11 @@ function App() {
     const isMobile = window.innerWidth <= 768;
     
     if (gameStart && birdPosition + gravity > 6 && !gameOver) {
-      if(isMobile){
-        setGravity(gravity - 18);
-        return
-      }
-      setGravity(gravity - 8);
+      // if(isMobile){
+      //   setGravity(gravity - 18);
+      //   return
+      // }
+      setGravity(gravity - 10);
 
     }
   };
@@ -169,13 +188,13 @@ function App() {
   };
 
   return (
-    <div className="game-container">
+    <div className="game-container ">
       {gameOver && (
         <div className="game-over-overlay">
           <h1>Game Over</h1>
           <p>Score: {score}</p>
           <p>Best Score: {bestScore}</p>
-          <button onClick={restartGame}>Restart</button>
+          <div className='hover:bg-slate-500 w-full rounded-lg mt-3' onClick={restartGame}>Restart</div>
         </div>
       )}
 
@@ -192,24 +211,33 @@ function App() {
       )}
 
       <div onClick={playClick}>
-        <div className="md:w-[40vw]  h-[40rem] m-auto relative top-[50px] bg-[url('https://user-images.githubusercontent.com/18351809/46888871-624a3900-ce7f-11e8-808e-99fd90c8a3f4.png')] bg-cover overflow-hidden">
-          {!gameStart && !gameOver && <button onClick={clickHandler}>Start Game</button>}
+      <div
+  className="md:w-[40vw] h-[40rem] m-auto relative top-[50px] overflow-hidden rounded-lg"
+  style={{
+    backgroundImage: gameOver
+      ? `url(${image})` // The image to show after game over
+      : "url('https://miro.medium.com/v2/resize:fit:1280/1*3w_84yghkeRKvg_JkMdX5g.gif')", // The gif while game is running
+    backgroundSize: "cover",
+  }}
+>
+          {!gameStart && !gameOver && <button onClick={clickHandler} >Start Flying</button>}
 
           <div
-            ref={birdRef}
-            className="ms-[2vw] absolute w-[60px] rounded-3xl h-fit  transition-all ease-in-out duration-150"
+            
+            className=" ms-[2vw] absolute w-[120px] transform -translate-x-1/2 -translate-y-1/2 left-[35%] rounded-3xl h-fit  transition-all ease-in-out duration-150  m-0 p-0 "
             style={{ top: `${birdPosition + gravity}%` }}
           >
+            <div ref={birdRef} className='w-[65px] h-2  absolute top-8 left-6 m-0 p-0'></div>
             <img
-              src={"https://miro.medium.com/v2/resize:fit:300/1*ey7wIxpYa7Er7nRHhwyirQ.png"}
-              className="rounded-3xl border"
+            src={gameOver ? birdImg: "https://img.clipart-library.com/2/clip-transparent-bird-gif/clip-transparent-bird-gif-2.gif"} // Use bird image if game is over, otherwise use GIF
+              className="rounded-3xl"
               alt="Bird"
             />
           </div>
 
           <div
             ref={bottomObstacleRef}
-            className="absolute bottom-0 rotate-180 h-fit w-[12vw] md:w-[5vw]"
+            className="obs absolute bottom-0 rotate-180 h-fit w-[12vw] md:w-[5vw]"
             style={{
               right: `${obstaclePosition}%`,
               height: `${bottomObstacleHeight}%`,
@@ -224,7 +252,7 @@ function App() {
 
           <div
             ref={topObstacleRef}
-            className="absolute top-0  w-[12vw] md:w-[5vw]"
+            className=" obs absolute top-0  w-[12vw] md:w-[5vw]"
             style={{
               right: `${obstaclePosition}%`,
              

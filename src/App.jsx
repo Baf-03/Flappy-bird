@@ -201,7 +201,7 @@ function App() {
             style={{ top: `${birdPosition + gravity}%` }}
           >
             <img
-              src={birdImg}
+              src={"https://miro.medium.com/v2/resize:fit:300/1*ey7wIxpYa7Er7nRHhwyirQ.png"}
               className="rounded-3xl border"
               alt="Bird"
             />
